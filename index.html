@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Tokenization Anatomy & Linguistic Bias Explorer | Live BPE Demo</title>
+  <meta name="description" content="Interactive demo exploring Byte-Pair Encoding (BPE) in LLMs: why tokenizers are biased toward English, how minority languages pay a 14x Token Tax, and how identical token collisions cause silly AI mistakes.">
+  <meta name="keywords" content="LLM, Tokenization, BPE, Byte Pair Encoding, GPT-4, GPT-4o, Linguistic Inequity, NLP, AI Bias">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔤</text></svg>">
+</head>
+<body>
+
+  <!-- Sticky App Navigation -->
+  <header class="app-header">
+    <div class="container nav-wrapper">
+      <a href="#hero" class="brand-badge">
+        <div class="brand-icon">🔤</div>
+        <div class="brand-titles">
+          <span class="brand-title">Tokenomics & Bias</span>
+          <span class="brand-subtitle">LLM Tokenization Lab</span>
+        </div>
+      </a>
+      <nav class="main-nav" aria-label="Main Navigation">
+        <a href="#studio" class="nav-link">Interactive Studio</a>
+        <a href="#token-tax" class="nav-link">The Token Tax</a>
+        <a href="#collisions" class="nav-link">Collisions & False Friends</a>
+        <a href="#mistake-lab" class="nav-link">Silly Mistake Lab</a>
+        <a href="#solutions" class="nav-link">Architectural Fixes</a>
+        <a href="#deploy" class="nav-link nav-cta">Deploy to GitHub Pages</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section id="hero" class="hero-section">
+      <div class="container">
+        <div class="hero-pill">
+          <span>⚡ Live In-Browser BPE</span>
+          <span>•</span>
+          <span>OpenAI cl100k & o200k</span>
+          <span>•</span>
+          <span>Zero Server / GitHub Pages Ready</span>
+        </div>
+        <h1 class="hero-title">
+          Why Tokenization Breaks LLMs: <br>
+          <span class="gradient-text">The English Monopoly & The Token Tax</span>
+        </h1>
+        <p class="hero-desc">
+          Large Language Models do not read words or letters; they process arbitrary integer chunks called <strong>tokens</strong>.
+          Explore how subword algorithms penalize minority languages with up to a <strong>14x financial & context tax</strong>,
+          and how identical token representations cause LLMs to make absurd reasoning blunders.
+        </p>
+
+        <div class="hero-highlights">
+          <div class="highlight-badge">
+            <span>🌐</span>
+            <span>Burmese pays <strong>14x more</strong> tokens than English</span>
+          </div>
+          <div class="highlight-badge">
+            <span>🍓</span>
+            <span>Why GPT-4 cannot count 'r's in <strong>strawberry</strong></span>
+          </div>
+          <div class="highlight-badge">
+            <span>⚠️</span>
+            <span>Why <strong>gift</strong> (present) & <strong>Gift</strong> (poison) share Token #53430</span>
+          </div>
+          <div class="highlight-badge">
+            <span>🔢</span>
+            <span>Why LLMs claim <strong>9.11 is larger than 9.9</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: Interactive Tokenizer Studio -->
+    <section id="studio">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Interactive Playground</span>
+          <h2 class="section-title">Live Tokenizer Studio</h2>
+          <p class="section-desc">
+            Type or paste any text below to inspect real token boundaries, token IDs, and raw byte encodings
+            rendered in real-time right inside your browser.
+          </p>
+        </div>
+
+        <div class="glass-card studio-card">
+          <!-- Toolbar -->
+          <div class="studio-toolbar">
+            <div class="model-selector-group">
+              <span class="group-label">Tokenizer Engine:</span>
+              <div class="model-tabs" role="tablist">
+                <button class="model-tab-btn active" data-model="cl100k_base" id="btn-model-cl100k" role="tab" aria-selected="true">
+                  GPT-4 / 3.5 (cl100k)
+                </button>
+                <button class="model-tab-btn" data-model="o200k_base" id="btn-model-o200k" role="tab" aria-selected="false">
+                  GPT-4o (o200k)
+                </button>
+                <button class="model-tab-btn" data-model="r50k_base" id="btn-model-r50k" role="tab" aria-selected="false">
+                  GPT-3 (r50k)
+                </button>
+              </div>
+            </div>
+
+            <div class="quick-presets-group">
+              <span class="group-label">Quick Try:</span>
+              <button class="preset-chip" data-text="strawberry">🍓 strawberry</button>
+              <button class="preset-chip" data-text=" apple">␣ apple vs apple</button>
+              <button class="preset-chip" data-text="9.11 vs 9.9">9.11 vs 9.9</button>
+              <button class="preset-chip" data-text="lead is heavy and lead the way">lead vs lead</button>
+              <button class="preset-chip" data-text="apple vs аpple">Latin vs Cyrillic</button>
+              <button class="preset-chip" data-text="လူတိုင်းသည် လွတ်လပ်စွာ မွေးဖွားလာကြပြီး">Burmese (180 tokens!)</button>
+              <button class="preset-chip" data-text="Ko te katoa o nga tangata i whanau mai">Te Reo Māori</button>
+            </div>
+          </div>
+
+          <!-- Textarea -->
+          <div class="editor-wrapper">
+            <textarea 
+              id="studio-input" 
+              class="studio-textarea" 
+              placeholder="Enter text to tokenize..." 
+              spellcheck="false"
+              aria-label="Text to tokenize"></textarea>
+          </div>
+
+          <!-- Live Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-pill">
+              <span class="stat-label">Total Tokens</span>
+              <span class="stat-value" id="stat-tokens">0</span>
+              <span class="stat-subtext">Integer IDs</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Tokens / Word</span>
+              <span class="stat-value" id="stat-tpw">0.00</span>
+              <span class="stat-subtext">1.0 = Ideal (English)</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Characters</span>
+              <span class="stat-value" id="stat-chars">0</span>
+              <span class="stat-subtext">UTF-8 String</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Words</span>
+              <span class="stat-value" id="stat-words">0</span>
+              <span class="stat-subtext">Whitespace Split</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Chars / Token</span>
+              <span class="stat-value" id="stat-cpt">0.00</span>
+              <span class="stat-subtext">Compression Density</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Est. Cost (GPT-4)</span>
+              <span class="stat-value" id="stat-cost">$0.00</span>
+              <span class="stat-subtext">Input tokens only</span>
+            </div>
+          </div>
+
+          <!-- Token Ribbon -->
+          <div class="token-ribbon-container">
+            <div class="ribbon-header">
+              <span>Token Ribbon (Click any token to inspect byte details):</span>
+              <span style="font-size: 0.75rem; color: var(--accent-secondary)">Colors generated deterministically by Token ID</span>
+            </div>
+            <div id="token-ribbon" class="token-ribbon" role="region" aria-live="polite">
+              <!-- Dynamically populated chips -->
+            </div>
+          </div>
+
+          <!-- Token Inspector Drawer -->
+          <div id="inspector-panel" class="inspector-panel">
+            <div class="inspector-header">
+              <span class="inspector-title">🔍 Token Inspector Details</span>
+              <button class="inspector-close" onclick="closeInspector()" aria-label="Close inspector">✕</button>
+            </div>
+            <div class="inspector-grid">
+              <div class="inspector-item">
+                <span class="inspector-label">Token Index</span>
+                <span class="inspector-val" id="insp-idx">-</span>
+              </div>
+              <div class="inspector-item">
+                <span class="inspector-label">Token ID</span>
+                <span class="inspector-val" id="insp-id" style="color: var(--accent-primary-light); font-weight: bold;">-</span>
+              </div>
+              <div class="inspector-item">
+                <span class="inspector-label">Decoded String</span>
+                <span class="inspector-val" id="insp-str">-</span>
+              </div>
+              <div class="inspector-item">
+                <span class="inspector-label">UTF-8 Hex Bytes</span>
+                <span class="inspector-val" id="insp-bytes">-</span>
+              </div>
+              <div class="inspector-item">
+                <span class="inspector-label">Byte Length</span>
+                <span class="inspector-val" id="insp-len">-</span>
+              </div>
+              <div class="inspector-item">
+                <span class="inspector-label">Unicode Codepoint(s)</span>
+                <span class="inspector-val" id="insp-unicode">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: The Token Tax & Minority Languages -->
+    <section id="token-tax">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Linguistic Inequity</span>
+          <h2 class="section-title">The "Token Tax" on Minority & Non-Latin Languages</h2>
+          <p class="section-desc">
+            Because Byte-Pair Encoding merges frequent subwords from overwhelmingly English pre-training corpora (Common Crawl), 
+            English words are compressed into single tokens. Minority and non-Latin scripts are fragmented into raw individual bytes.
+          </p>
+        </div>
+
+        <!-- The 4 Punishments Overview -->
+        <div class="token-tax-overview">
+          <div class="tax-card punish-1">
+            <span class="tax-card-num">Punishment #1</span>
+            <h3 class="tax-card-title">Economic Inequity</h3>
+            <p class="tax-card-desc">
+              API pricing is billed per token. A developer querying an LLM in Burmese or Amharic pays up to 
+              <strong>14x more money</strong> than an English user for the exact same semantic question.
+            </p>
+          </div>
+          <div class="tax-card punish-2">
+            <span class="tax-card-num">Punishment #2</span>
+            <h3 class="tax-card-title">Context Shrinkage</h3>
+            <p class="tax-card-desc">
+              A 128k context window holds an entire book in English. In Hindi or Burmese, the context window is exhausted 
+              in just 10,000 to 20,000 words because tokens are consumed 5x to 14x faster.
+            </p>
+          </div>
+          <div class="tax-card punish-3">
+            <span class="tax-card-num">Punishment #3</span>
+            <h3 class="tax-card-title">Latency Inflation</h3>
+            <p class="tax-card-desc">
+              LLMs generate text autoregressively (one token per forward pass). Generating a Burmese paragraph requires 
+              <strong>5x more forward passes</strong>, causing severe response lag and higher server compute costs.
+            </p>
+          </div>
+          <div class="tax-card punish-4">
+            <span class="tax-card-num">Punishment #4</span>
+            <h3 class="tax-card-title">Reasoning Degradation</h3>
+            <p class="tax-card-desc">
+              Transformers rely on self-attention to build meaning. When a single word is shattered into 6 disjoint raw bytes, 
+              attention heads must spend capacity reconstructing spelling rather than reasoning.
+            </p>
+          </div>
+        </div>
+
+        <!-- Parallel Corpus Filter and Table -->
+        <div class="table-filter-bar">
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All 15 Languages</button>
+            <button class="filter-btn" data-filter="minority">Indigenous & Minority Scripts</button>
+            <button class="filter-btn" data-filter="non-latin">Non-Latin Alphabets</button>
+            <button class="filter-btn" data-filter="european">Western European</button>
+          </div>
+          <span style="font-size: 0.82rem; color: var(--text-muted)">
+            Benchmark Text: <em>Universal Declaration of Human Rights (Article 1)</em>
+          </span>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="comparison-table" id="language-table">
+            <thead>
+              <tr>
+                <th>Language</th>
+                <th>Script</th>
+                <th>Tokens (GPT-4 / 4o)</th>
+                <th>Words</th>
+                <th>Tokens / Word</th>
+                <th>Cost Multiplier vs EN</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="language-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Economic Impact Calculator -->
+        <div class="calc-card">
+          <h3 class="calc-title">💰 The Real-World Token Tax Calculator</h3>
+          <p class="section-desc" style="font-size: 0.95rem;">
+            See how much an organization pays to process documents in different languages using standard GPT-4 pricing ($30 / 1M input tokens).
+          </p>
+
+          <div class="calc-grid">
+            <div class="calc-controls">
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span>Document Corpus Size:</span>
+                  <strong id="calc-words-display">50,000 words</strong>
+                </div>
+                <input 
+                  type="range" 
+                  id="calc-words-slider" 
+                  class="custom-slider" 
+                  min="5000" 
+                  max="200000" 
+                  step="5000" 
+                  value="50000"
+                  aria-label="Document corpus size in words">
+              </div>
+
+              <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+                ℹ️ 50,000 words is roughly the size of a standard corporate annual report, legal filing, or undergraduate textbook.
+              </div>
+            </div>
+
+            <div class="calc-results">
+              <div class="calc-bars">
+                <div class="calc-bar-item">
+                  <div class="calc-bar-header">
+                    <span>🇬🇧 English</span>
+                    <strong id="cost-en-val">$1.62 (54,000 tokens)</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div id="bar-en" class="bar-fill bar-en">1.0x</div>
+                  </div>
+                </div>
+
+                <div class="calc-bar-item">
+                  <div class="calc-bar-header">
+                    <span>🇮🇳 Hindi (Devanagari)</span>
+                    <strong id="cost-hi-val">$8.40 (280,000 tokens)</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div id="bar-hi" class="bar-fill bar-hi">5.2x</div>
+                  </div>
+                </div>
+
+                <div class="calc-bar-item">
+                  <div class="calc-bar-header">
+                    <span>🇪🇹 Amharic (Ethiopic)</span>
+                    <strong id="cost-am-val">$16.64 (554,500 tokens)</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div id="bar-am" class="bar-fill bar-am">10.3x</div>
+                  </div>
+                </div>
+
+                <div class="calc-bar-item">
+                  <div class="calc-bar-header">
+                    <span>🇲🇲 Burmese (Myanmar)</span>
+                    <strong id="cost-my-val">$45.00 (1,500,000 tokens)</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div id="bar-my" class="bar-fill bar-my">27.8x</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Identical Tokenization & False Friends -->
+    <section id="collisions">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Token Collisions</span>
+          <h2 class="section-title">Identical Tokenization & The False Friend Trap</h2>
+          <p class="section-desc">
+            What happens when two completely different words or concepts share the <strong>exact same token ID</strong>?
+            At the input embedding matrix, the model receives only ONE static vector. The model starts completely blind to the distinction.
+          </p>
+        </div>
+
+        <div class="collision-tabs-container">
+          <div class="collision-category-nav" id="collision-tabs-nav" role="tablist">
+            <!-- Dynamically populated preset buttons -->
+          </div>
+
+          <div id="collision-display-card" class="collision-display-card">
+            <!-- Dynamically rendered collision info -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Silly Mistake Laboratory -->
+    <section id="mistake-lab">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Failure Modes</span>
+          <h2 class="section-title">The Silly Mistake Laboratory</h2>
+          <p class="section-desc">
+            Explore the most infamous blunders in modern LLMs that are caused not by intelligence limitations, 
+            but by the mechanics of the tokenizer.
+          </p>
+        </div>
+
+        <div class="lab-grid">
+          <!-- Card 1: Strawberry Paradox -->
+          <div class="lab-card">
+            <div class="lab-card-icon">🍓</div>
+            <h3 class="lab-card-title">The "Strawberry" Dilemma</h3>
+            <p class="lab-card-desc">
+              Why does GPT-4 fail to count the 'r's in "strawberry"? Because "strawberry" is tokenized as 
+              <code>['str', 'aw', 'berry']</code>. The model NEVER sees the individual letters!
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>Standard word:</span>
+                <span class="sandbox-code">"strawberry"</span>
+                <span class="sandbox-token-res">[496, 675, 15717]</span>
+              </div>
+              <div class="sandbox-row">
+                <span>Hyphenated trick:</span>
+                <span class="sandbox-code">"s-t-r-a-w-b-e-r-r-y"</span>
+                <span class="sandbox-token-res">19 individual tokens</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio('strawberry')">
+                Test in Studio ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: 9.11 vs 9.9 Math Trap -->
+          <div class="lab-card">
+            <div class="lab-card-icon">🔢</div>
+            <h3 class="lab-card-title">The "9.11 > 9.9" Math Trap</h3>
+            <p class="lab-card-desc">
+              LLMs notoriously claim that 9.11 is larger than 9.9 because <code>9.11</code> is split into 
+              <code>['9', '.', '11']</code> and <code>9.9</code> into <code>['9', '.', '9']</code>. Token <code>11</code> is greater than token <code>9</code>!
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>9.11 tokens:</span>
+                <span class="sandbox-code">['9', '.', '11']</span>
+                <span class="sandbox-token-res">[24, 13, 806]</span>
+              </div>
+              <div class="sandbox-row">
+                <span>9.9 tokens:</span>
+                <span class="sandbox-code">['9', '.', '9']</span>
+                <span class="sandbox-token-res">[24, 13, 24]</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio('9.11 vs 9.9')">
+                Test in Studio ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 3: The Space Trap -->
+          <div class="lab-card">
+            <div class="lab-card-icon">␣</div>
+            <h3 class="lab-card-title">The Leading Space Trap</h3>
+            <p class="lab-card-desc">
+              Adding a single space before a word completely alters its token ID: 
+              <code>"apple"</code> is 23182, but <code>" apple"</code> is 24149.
+              A trailing space in a prompt can flip an LLM's classification from true to false!
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>"apple":</span>
+                <span class="sandbox-code">apple</span>
+                <span class="sandbox-token-res">Token #23182</span>
+              </div>
+              <div class="sandbox-row">
+                <span>" apple":</span>
+                <span class="sandbox-code">␣apple</span>
+                <span class="sandbox-token-res">Token #24149</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio(' apple')">
+                Test in Studio ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 4: Homoglyph Security Attack -->
+          <div class="lab-card">
+            <div class="lab-card-icon">🦹</div>
+            <h3 class="lab-card-title">Homoglyphs & Guardrail Bypasses</h3>
+            <p class="lab-card-desc">
+              Latin 'a' (U+0061) and Cyrillic 'а' (U+0430) look 100% IDENTICAL to human eyes. 
+              Latin <code>"apple"</code> is 1 token (23182), while Cyrillic <code>"аpple"</code> explodes into 3 tokens 
+              (1506, 604, 273), bypassing toxicity and copyright filters!
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>Latin 'apple':</span>
+                <span class="sandbox-code">apple</span>
+                <span class="sandbox-token-res">1 token (#23182)</span>
+              </div>
+              <div class="sandbox-row">
+                <span>Cyrillic 'аpple':</span>
+                <span class="sandbox-code">аpple</span>
+                <span class="sandbox-token-res">3 tokens (#1506, #604, #273)</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio('apple vs аpple')">
+                Test in Studio ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 5: Glitch Tokens -->
+          <div class="lab-card">
+            <div class="lab-card-icon">👾</div>
+            <h3 class="lab-card-title">The "SolidGoldMagikarp" Glitch</h3>
+            <p class="lab-card-desc">
+              In GPT-3's tokenizer (<code>r50k_base</code>), <code>" SolidGoldMagikarp"</code> is single Token #43453! 
+              It came from a Reddit username scraped during tokenizer vocabulary building, but had near-zero occurrence 
+              in text training, creating an untrained embedding that breaks the model.
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>GPT-3 Token ID:</span>
+                <span class="sandbox-code">" SolidGoldMagikarp"</span>
+                <span class="sandbox-token-res">Single Token #43453</span>
+              </div>
+              <div class="sandbox-row">
+                <span>Model behavior:</span>
+                <span style="color:var(--accent-warning); font-size:0.8rem">Repetition loops & crashes</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio(' SolidGoldMagikarp')">
+                Test in Studio ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 6: Reversing Words -->
+          <div class="lab-card">
+            <div class="lab-card-icon">🔄</div>
+            <h3 class="lab-card-title">The Anagram & Reversal Blindspot</h3>
+            <p class="lab-card-desc">
+              Ask an LLM to reverse <code>"listen"</code> to <code>"netsil"</code>. It often fails because 
+              <code>"listen"</code> is absorbed into a single token vector (ID #21876). The model has no direct access 
+              to the sequence of characters.
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>Input token:</span>
+                <span class="sandbox-code">listen</span>
+                <span class="sandbox-token-res">Token #21876</span>
+              </div>
+              <div class="sandbox-row">
+                <span>Characters:</span>
+                <span style="color:var(--text-muted); font-size:0.8rem">Invisible to model input</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio('listen')">
+                Test in Studio ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Solutions & The Token-Free Future -->
+    <section id="solutions">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Future Directions</span>
+          <h2 class="section-title">How the AI Industry is Fixing Tokenization</h2>
+          <p class="section-desc">
+            Leading AI researchers acknowledge tokenization as one of the greatest bottlenecks in machine learning. 
+            Here is how frontier architectures are evolving.
+          </p>
+        </div>
+
+        <div class="solutions-grid">
+          <div class="solution-card">
+            <span class="solution-badge">Approach 1</span>
+            <h3 class="solution-title">Massive Vocabulary Expansion</h3>
+            <p class="solution-desc">
+              <strong>GPT-4o expanded vocabulary to 200k tokens</strong> (from GPT-4's 100k), and <strong>Llama 3 expanded to 128k</strong>.
+              By doubling vocabulary size, non-English scripts like Hindi and Burmese saw token counts drop by 50% to 70%! 
+              However, embedding matrices become much larger (consuming gigabytes of VRAM).
+            </p>
+          </div>
+
+          <div class="solution-card">
+            <span class="solution-badge">Approach 2</span>
+            <h3 class="solution-title">Byte-Fallback BPE (Llama & Gemma)</h3>
+            <p class="solution-desc">
+              Instead of an unknown token symbol (<code>&lt;unk&gt;</code>) that deletes unrecognizable glyphs, 
+              modern tokenizers fall back to raw UTF-8 bytes (0x00 to 0xFF). Any unicode character can be represented, 
+              preventing complete data loss even in rare languages.
+            </p>
+          </div>
+
+          <div class="solution-card">
+            <span class="solution-badge">Approach 3</span>
+            <h3 class="solution-title">Token-Free Models (BLT & MegaByte)</h3>
+            <p class="solution-desc">
+              Meta's <strong>Byte-Latent Transformer (BLT)</strong> and <strong>MegaByte</strong> eliminate tokenizers entirely! 
+              They operate directly on raw byte streams using local patching. This eliminates all token taxes, solves letter counting, 
+              prevents prompt injection homoglyphs, and treats all human languages equally.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: GitHub Pages Deployment Guide -->
+    <section id="deploy">
+      <div class="container">
+        <div class="deploy-card">
+          <h3 class="deploy-title">🚀 Host This Demo on GitHub Pages in 30 Seconds</h3>
+          <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
+            This entire demo is built with zero server-side dependencies. All tokenizers run client-side in the browser. 
+            You can push this repository directly to GitHub and enable GitHub Pages under <strong>Settings &gt; Pages</strong>!
+          </p>
+
+          <div class="code-snippet-box">
+            <button class="btn-copy-code" id="btn-copy-code" onclick="copyDeployCode()">Copy</button>
+            <pre id="deploy-code-snippet"># 1. Initialize git and commit
+git init
+git add .
+git commit -m "Add interactive LLM tokenization demo"
+
+# 2. Push to your GitHub repository
+git branch -M main
+git remote add origin https://github.com/martianunlimited/llm_tokenizer.git
+git push -u origin main
+
+# 3. Enable GitHub Pages in your repo:
+# Settings -> Pages -> Source: Deploy from a branch -> Branch: main -> / (root) -> Save!
+# Your live site is now ready at: https://martianunlimited.github.io/llm_tokenizer/</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container">
+      <p>
+        Built with native BPE tokenizers (OpenAI cl100k_base, o200k_base, r50k_base). 
+        Ready for GitHub Pages static hosting.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Real Client-Side Tokenizers -->
+  <script src="lib/cl100k_base.js"></script>
+  <script src="lib/o200k_base.js"></script>
+  <script src="lib/r50k_base.js"></script>
+
+  <!-- Application Controller -->
+  <script src="app.js"></script>
+</body>
+</html>

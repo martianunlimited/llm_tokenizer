@@ -1,0 +1,376 @@
+[
+  {
+    "id": "homographs-lead",
+    "category": "homograph",
+    "title": "Homograph Blindspot: 'lead' (Metal vs Guide)",
+    "subtitle": "Identical Token ID 27152 for two fundamentally distinct words",
+    "explanation": "In English, 'lead' (/lɛd/, heavy toxic metal element Pb) and 'lead' (/liːd/, verb to guide or be in first place) have completely different pronunciations, origins, and meanings. Because BPE operates purely on character sequences, both words receive the EXACT SAME token ID: 27152. At the transformer's input embedding layer, there is only a single static vector for both concepts.",
+    "consequence_for_llms": "In low-context or ambiguous prompts (e.g. 'Can lead be dissolved?'), the LLM has no initial semantic clue whether you mean chemistry or team management and must infer it purely from surrounding tokens. If context is missing, it easily hallucinates or conflates the two meanings.",
+    "items": [
+      {
+        "label": "Metal (Pb)",
+        "input_text": "lead",
+        "token_ids": [
+          27152
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "lead"
+        ],
+        "meaning_or_context": "Heavy toxic metal element, chemical symbol Pb"
+      },
+      {
+        "label": "Guide / Front",
+        "input_text": "lead",
+        "token_ids": [
+          27152
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "lead"
+        ],
+        "meaning_or_context": "Verb meaning to guide, direct, or hold first place"
+      }
+    ]
+  },
+  {
+    "id": "false-friends-gift",
+    "category": "false_friend",
+    "title": "Cross-Lingual False Friend: 'gift' (EN: Present vs DE: Poison)",
+    "subtitle": "Identical Token ID 53430 shared across two languages with opposite meanings",
+    "explanation": "In English, 'gift' means a kind present or offering. In German, 'Gift' (or lowercased 'gift') means DEADLY POISON! Because subword vocabularies are language-agnostic, the string 'gift' is assigned token ID 53430 in GPT-4 regardless of which language is being spoken.",
+    "consequence_for_llms": "In multilingual or code-switched contexts, LLMs can commit hilarious and dangerous blunders: e.g. translating 'Er hat mir ein Gift gegeben' as 'He gave me a present' or warning English readers that a birthday gift is lethal.",
+    "items": [
+      {
+        "label": "English 'gift'",
+        "input_text": "gift",
+        "token_ids": [
+          53430
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "gift"
+        ],
+        "meaning_or_context": "A kind present or blessing"
+      },
+      {
+        "label": "German 'gift'",
+        "input_text": "gift",
+        "token_ids": [
+          53430
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "gift"
+        ],
+        "meaning_or_context": "Deadly poison or venom (das Gift)"
+      }
+    ]
+  },
+  {
+    "id": "false-friends-pain",
+    "category": "false_friend",
+    "title": "Cross-Lingual False Friend: 'pain' (EN: Agony vs FR: Bread)",
+    "subtitle": "Identical Token ID 92724 shared between English suffering and French food",
+    "explanation": "In French, 'pain' is bread (a staple food like a baguette). In English, 'pain' is intense physical or emotional agony. The tokenizer produces the exact token ID 92724 for both.",
+    "consequence_for_llms": "Bilingual prompts such as 'I eat pain every morning' cause language models to struggle with metaphor vs literal translation, often generating confusion or safety flags about self-harm.",
+    "items": [
+      {
+        "label": "English 'pain'",
+        "input_text": "pain",
+        "token_ids": [
+          92724
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "pain"
+        ],
+        "meaning_or_context": "Physical suffering, hurt, or ache"
+      },
+      {
+        "label": "French 'pain'",
+        "input_text": "pain",
+        "token_ids": [
+          92724
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "pain"
+        ],
+        "meaning_or_context": "Bread, baguette, or loaf (staple food)"
+      }
+    ]
+  },
+  {
+    "id": "false-friends-chat",
+    "category": "false_friend",
+    "title": "Cross-Lingual False Friend: 'chat' (EN: Talk vs FR: Cat)",
+    "subtitle": "Identical Token ID 9884 shared between talking and a feline pet",
+    "explanation": "In English, 'chat' is an informal conversation. In French, 'chat' is a feline animal (a cat). Both strings produce token ID 9884 in GPT-4.",
+    "consequence_for_llms": "Prompts like 'Let us have a chat' or 'Regarde ce chat' can cross-contaminate semantic embeddings in bilingual dialogues, causing the model to interpret 'chatting' as handling an animal.",
+    "items": [
+      {
+        "label": "English 'chat'",
+        "input_text": "chat",
+        "token_ids": [
+          9884
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "chat"
+        ],
+        "meaning_or_context": "Casual, friendly conversation"
+      },
+      {
+        "label": "French 'chat'",
+        "input_text": "chat",
+        "token_ids": [
+          9884
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "chat"
+        ],
+        "meaning_or_context": "A cat, feline pet (le chat)"
+      }
+    ]
+  },
+  {
+    "id": "space-shifts-apple",
+    "category": "space_shift",
+    "title": "The Leading Space & Capitalization Trap",
+    "subtitle": "The same semantic word 'apple' splits into 5 completely disjoint token IDs!",
+    "explanation": "To human readers, ' apple', 'apple', 'Apple', ' Apple', and 'APPLE' are all the exact same fruit. To an LLM tokenizer, byte-pair encoding treats leading whitespace and capitalization as entirely different strings! ' apple' is 24149, 'apple' is 23182, ' Apple' is 8325, 'Apple' is 27665, and 'APPLE' is 47285.",
+    "consequence_for_llms": "Because each token ID has a completely independent weight vector in the transformer, minor formatting changes (e.g. an extra trailing space at the end of a prompt) can dramatically alter the model's next-token probabilities, causing prompt brittleness and unexpected answer flips.",
+    "items": [
+      {
+        "label": " apple (with space)",
+        "input_text": " apple",
+        "token_ids": [
+          24149
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          " apple"
+        ],
+        "meaning_or_context": "Leading whitespace token (standard in sentences)"
+      },
+      {
+        "label": "apple (no space)",
+        "input_text": "apple",
+        "token_ids": [
+          23182
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "apple"
+        ],
+        "meaning_or_context": "Isolated word without leading whitespace"
+      },
+      {
+        "label": " Apple (cap + space)",
+        "input_text": " Apple",
+        "token_ids": [
+          8325
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          " Apple"
+        ],
+        "meaning_or_context": "Capitalized with leading space"
+      },
+      {
+        "label": "Apple (cap no space)",
+        "input_text": "Apple",
+        "token_ids": [
+          27665
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "Apple"
+        ],
+        "meaning_or_context": "Capitalized isolated word"
+      },
+      {
+        "label": "APPLE (all caps)",
+        "input_text": "APPLE",
+        "token_ids": [
+          79099
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "APPLE"
+        ],
+        "meaning_or_context": "All caps uppercase token"
+      }
+    ]
+  },
+  {
+    "id": "strawberry-counting",
+    "category": "letter_counting",
+    "title": "The 'Strawberry' Paradox: Why LLMs Cannot Count Letters",
+    "subtitle": "'strawberry' is parsed as ['str', 'aw', 'berry'] - the model never sees individual letters!",
+    "explanation": "The notorious failure where GPT-4 insists that 'strawberry' has only two 'r's (or cannot reverse words) is directly caused by tokenization. To the model, 'strawberry' is compressed into tokens 496 ('str'), 675 ('aw'), and 15717 ('berry'). The individual characters 's-t-r-a-w-b-e-r-r-y' DO NOT EXIST in the transformer's input!",
+    "consequence_for_llms": "To count letters, the LLM must indirectly hallucinate an internal character-by-character spelling representation. Whenever a word is absorbed into a single subword token, character-level tasks like spelling, letter counting, anagrams, and word reversals become prone to failure.",
+    "items": [
+      {
+        "label": "strawberry",
+        "input_text": "strawberry",
+        "token_ids": [
+          496,
+          675,
+          15717
+        ],
+        "token_count": 3,
+        "tokens_str": [
+          "str",
+          "aw",
+          "berry"
+        ],
+        "meaning_or_context": "Tokenized as 3 chunks: ['str', 'aw', 'berry']"
+      },
+      {
+        "label": "Strawberry",
+        "input_text": "Strawberry",
+        "token_ids": [
+          2645,
+          675,
+          15717
+        ],
+        "token_count": 3,
+        "tokens_str": [
+          "Str",
+          "aw",
+          "berry"
+        ],
+        "meaning_or_context": "Tokenized as: ['Str', 'aw', 'berry']"
+      },
+      {
+        "label": "s-t-r-a-w-b-e-r-r-y",
+        "input_text": "s-t-r-a-w-b-e-r-r-y",
+        "token_ids": [
+          82,
+          2442,
+          3880,
+          7561,
+          2695,
+          1481,
+          5773,
+          3880,
+          3880,
+          12303
+        ],
+        "token_count": 10,
+        "tokens_str": [
+          "s",
+          "-t",
+          "-r",
+          "-a",
+          "-w",
+          "-b",
+          "-e",
+          "-r",
+          "-r",
+          "-y"
+        ],
+        "meaning_or_context": "Hyphenated characters: model finally sees letters!"
+      }
+    ]
+  },
+  {
+    "id": "decimal-math-911",
+    "category": "math_split",
+    "title": "The Decimal Math Trap: 'Is 9.11 bigger than 9.9?'",
+    "subtitle": "Arbitrary number tokenization creates deceptive numerical illusions",
+    "explanation": "Why do LLMs notoriously claim that 9.11 is larger than 9.9? Look at the token splits: '9.11' is split into ['9', '.', '11'] (tokens 24, 13, 806). '9.9' is split into ['9', '.', '9'] (tokens 24, 13, 24). The model compares the subword token '11' with '9'. In integers, 11 > 9, so the model's pattern matching trips!",
+    "consequence_for_llms": "Tokenizers chunk numbers unpredictably based on byte frequency rather than place value (ones, tens, hundreds). This causes catastrophic errors in arithmetic, decimal comparisons, and financial modeling.",
+    "items": [
+      {
+        "label": "9.11",
+        "input_text": "9.11",
+        "token_ids": [
+          24,
+          13,
+          806
+        ],
+        "token_count": 3,
+        "tokens_str": [
+          "9",
+          ".",
+          "11"
+        ],
+        "meaning_or_context": "Tokenized as ['9', '.', '11'] -> Token 11 is mathematically deceptive"
+      },
+      {
+        "label": "9.9",
+        "input_text": "9.9",
+        "token_ids": [
+          24,
+          13,
+          24
+        ],
+        "token_count": 3,
+        "tokens_str": [
+          "9",
+          ".",
+          "9"
+        ],
+        "meaning_or_context": "Tokenized as ['9', '.', '9'] -> Token 9"
+      },
+      {
+        "label": "9.90",
+        "input_text": "9.90",
+        "token_ids": [
+          24,
+          13,
+          1954
+        ],
+        "token_count": 3,
+        "tokens_str": [
+          "9",
+          ".",
+          "90"
+        ],
+        "meaning_or_context": "Normalized with trailing zero: ['9', '.', '90']"
+      }
+    ]
+  },
+  {
+    "id": "homoglyph-attack",
+    "category": "homoglyph",
+    "title": "The Homoglyph Disguise: Latin 'apple' vs Cyrillic 'аpple'",
+    "subtitle": "Visually identical to humans, completely different token streams to LLMs",
+    "explanation": "Type Latin 'apple' (ASCII 'a', code 97). Now type Cyrillic 'аpple' (Cyrillic 'а', Unicode U+0430). On screen, both strings look 100% IDENTICAL. But in the tokenizer, Latin 'apple' is a single word token (23182), while Cyrillic 'аpple' explodes into 3 tokens: [1506, 604, 273] because the Cyrillic byte sequence triggers subword breakdown!",
+    "consequence_for_llms": "Adversaries exploit this for prompt injection and bypassing LLM guardrails: a banned word or brand name can be rendered with a Cyrillic homoglyph, slipping past keyword filters and embedding classifiers while remaining completely readable to human victims.",
+    "items": [
+      {
+        "label": "Latin 'apple'",
+        "input_text": "apple",
+        "token_ids": [
+          23182
+        ],
+        "token_count": 1,
+        "tokens_str": [
+          "apple"
+        ],
+        "meaning_or_context": "Standard English word (1 token: 23182)"
+      },
+      {
+        "label": "Cyrillic 'аpple'",
+        "input_text": "аpple",
+        "token_ids": [
+          1506,
+          604,
+          273
+        ],
+        "token_count": 3,
+        "tokens_str": [
+          "а",
+          "pp",
+          "le"
+        ],
+        "meaning_or_context": "Cyrillic 'а' (3 tokens: 1506, 604, 273)"
+      }
+    ]
+  }
+]
