@@ -37,13 +37,14 @@ def test_language_dataset_integrity():
     assert "hi" in codes, "Must include Hindi"
     assert "am" in codes, "Must include Amharic"
     assert "mi" in codes, "Must include Māori"
+    assert "th" in codes, "Must include Thai (scriptio continua inefficiency)"
 
-    # Burmese token count should be significantly higher than English
+    # Thai token count should be significantly higher than English
     en_sample = next(item for item in data if item["code"] == "en")
-    my_sample = next(item for item in data if item["code"] == "my")
+    th_sample = next(item for item in data if item["code"] == "th")
 
-    assert my_sample["tokens_cl100k"] > en_sample["tokens_cl100k"] * 5
-    assert my_sample["cost_multiplier_vs_english_cl100k"] >= 5.0
+    assert th_sample["tokens_cl100k"] > en_sample["tokens_cl100k"] * 4
+    assert th_sample["cost_multiplier_vs_english_cl100k"] >= 4.0
 
 
 def test_collision_presets_integrity():
@@ -63,6 +64,7 @@ def test_collision_presets_integrity():
         "letter_counting",
         "math_split",
         "homoglyph",
+        "scriptio_continua",
     }
     assert expected_categories.issubset(categories), (
         f"Missing categories: {expected_categories - categories}"

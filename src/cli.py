@@ -93,7 +93,7 @@ def languages() -> None:
 
     for s in RAW_LANGUAGE_SAMPLES:
         res = svc.tokenize(s["text"], "cl100k_base")
-        words = len(s["text"].split()) or 1
+        words = s.get("word_count") or len(s["text"].split()) or 1
         tpw = round(res.token_count / words, 2)
         mult = round(res.token_count / en_tokens, 2)
         table.add_row(

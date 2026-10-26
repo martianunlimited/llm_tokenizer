@@ -161,6 +161,17 @@ RAW_LANGUAGE_SAMPLES: list[dict] = [
         "is_minority_or_underrepresented": True,
         "notes": "Indigenous North American language. Almost every syllable splits into 3-4 raw fallback bytes.",
     },
+    {
+        "code": "th",
+        "name": "Thai",
+        "native_name": "ภาษาไทย",
+        "script": "Thai (Scriptio Continua)",
+        "family": "Kra-Dai",
+        "text": "เราทุกคนเกิดมาอย่างอิสระและมีความเท่าเทียมกันในเกียรติศักดิ์และสิทธิ",
+        "word_count": 15,
+        "is_minority_or_underrepresented": True,
+        "notes": "Written without spaces (scriptio continua) using 3-byte UTF-8 chars. A 15-word sentence explodes into 65 tokens in GPT-4 (5.0x English) and 136 tokens in GPT-3 (10.5x English) due to single-letter fragmentation and byte fallbacks.",
+    },
 ]
 
 
@@ -181,7 +192,7 @@ def generate_language_dataset(service: TokenizerService | None = None) -> list[L
         res_o2 = svc.tokenize(raw["text"], encoding="o200k_base")
         res_r5 = svc.tokenize(raw["text"], encoding="r50k_base")
 
-        words = len(raw["text"].split())
+        words = raw.get("word_count") or len(raw["text"].split())
         word_count = words if words > 0 else 1
 
         tpw_cl = round(res_cl.token_count / word_count, 2)
@@ -422,6 +433,45 @@ def generate_collision_presets(service: TokenizerService | None = None) -> list[
                 [
                     ("Latin 'apple'", "apple", "Standard English word (1 token: 23182)"),
                     ("Cyrillic 'аpple'", "аpple", "Cyrillic 'а' (3 tokens: 1506, 604, 273)"),
+                ]
+            ),
+        ),
+        CollisionPreset(
+            id="thai-scriptio-continua-ambiguity",
+            category="scriptio_continua",
+            title="Thai Scriptio Continua: Cross-Boundary Token Merges & Ambiguities",
+            subtitle="Lack of word spaces causes BPE to merge across word borders and confuse fundamental concepts",
+            explanation=(
+                "Thai is written without spaces between words (scriptio continua). Because standard LLM tokenizers "
+                "rely on greedy byte frequencies rather than morphological word boundaries, Thai text suffers from "
+                "two critical failures: (1) Cross-Boundary Merging: BPE merges the tail of one word with the head of the "
+                "next word into an unintended subword (e.g. 'หา' [visit] + 'มเหสี' [queen consort] merges into 'หาม' [stretcher/taboo]), "
+                "scrambling the model's semantic interpretation. (2) Word Segmentation Ambiguity: A string like 'ตากลม' "
+                "can mean either 'ตา-กลม' (round eyes) or 'ตาก-ลม' (basking in the wind). In cl100k it shatters into 5 individual letters; "
+                "in o200k, BPE binds 'ต' + 'าก' into 'ตาก' (bask), locking the model into one interpretation and blinding it to 'round eyes'."
+            ),
+            consequence_for_llms=(
+                "LLMs frequently misinterpret Thai questions, hallucinate incorrect translations (e.g., mistaking visiting royalty for "
+                "carrying corpses on a stretcher), and conflate tonal concepts (like ขาว [white], ข่าว [news], and ข้าว [rice]) "
+                "because tone marks and combining vowels get detached into isolated byte tokens."
+            ),
+            items=make_items(
+                [
+                    (
+                        "ตา-กลม (Round Eyes vs Wind)",
+                        "ตากลม",
+                        "Ambiguous segmentation: 'ตา-กลม' (round eyes: ตา=eye, กลม=round) vs 'ตาก-ลม' (bask in wind: ตาก=air out, ลม=wind)",
+                    ),
+                    (
+                        "ไป-หา-มเหสี (Visit Queen Consort)",
+                        "ไปหามเหสี",
+                        "Tokenizer merges 'า' + 'ม' into 'าม', forming 'หาม' (stretcher/taboo) and destroying the concept of 'มเหสี' (queen consort)",
+                    ),
+                    (
+                        "ขาว / ข่าว / ข้าว (Tone Confusion)",
+                        "ขาว ข่าว ข้าว",
+                        "Tonal shift: 'ขาว' (white) vs 'ข่าว' (news) vs 'ข้าว' (rice) - separated tone marks trigger conceptual hallucination",
+                    ),
                 ]
             ),
         ),

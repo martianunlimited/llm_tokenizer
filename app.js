@@ -289,6 +289,25 @@ const EMBEDDED_LANGUAGES = [
     "cost_multiplier_vs_english_o200k": 4.77,
     "is_minority_or_underrepresented": true,
     "notes": "Indigenous North American language. Almost every syllable splits into 3-4 raw fallback bytes."
+  },
+  {
+    "code": "th",
+    "name": "Thai",
+    "native_name": "ภาษาไทย",
+    "script": "Thai (Scriptio Continua)",
+    "family": "Kra-Dai",
+    "text": "เราทุกคนเกิดมาอย่างอิสระและมีความเท่าเทียมกันในเกียรติศักดิ์และสิทธิ",
+    "word_count": 15,
+    "char_count": 68,
+    "tokens_cl100k": 65,
+    "tokens_o200k": 31,
+    "tokens_r50k": 136,
+    "tpw_cl100k": 4.33,
+    "tpw_o200k": 2.07,
+    "cost_multiplier_vs_english_cl100k": 5.0,
+    "cost_multiplier_vs_english_o200k": 2.38,
+    "is_minority_or_underrepresented": true,
+    "notes": "Written without spaces (scriptio continua) using 3-byte UTF-8 chars. A 15-word sentence explodes into 65 tokens in GPT-4 (5.0x English) and 136 tokens in GPT-3 (10.5x English) due to single-letter fragmentation and byte fallbacks."
   }
 ];
 
@@ -538,6 +557,40 @@ const EMBEDDED_PRESETS = [
         "token_count": 3,
         "tokens_str": ["\\xd0\\xb0", "pp", "le"],
         "meaning_or_context": "Cyrillic 'а' causes byte fallback split into 3 tokens"
+      }
+    ]
+  },
+  {
+    "id": "thai-scriptio-continua-ambiguity",
+    "category": "scriptio_continua",
+    "title": "Thai Scriptio Continua: Cross-Boundary Token Merges & Ambiguities",
+    "subtitle": "Lack of word spaces causes BPE to merge across word borders and confuse fundamental concepts",
+    "explanation": "Thai is written without spaces between words (scriptio continua). Because standard LLM tokenizers rely on greedy byte frequencies rather than morphological word boundaries, Thai text suffers from two critical failures: (1) Cross-Boundary Merging: BPE merges the tail of one word with the head of the next word into an unintended subword (e.g. 'หา' [visit] + 'มเหสี' [queen consort] merges into 'หาม' [stretcher/taboo]), scrambling the model's semantic interpretation. (2) Word Segmentation Ambiguity: A string like 'ตากลม' can mean either 'ตา-กลม' (round eyes) or 'ตาก-ลม' (basking in the wind). In cl100k it shatters into 5 individual letters; in o200k, BPE binds 'ต' + 'าก' into 'ตาก' (bask), locking the model into one interpretation and blinding it to 'round eyes'.",
+    "consequence_for_llms": "LLMs frequently misinterpret Thai questions, hallucinate incorrect translations (e.g., mistaking visiting royalty for carrying corpses on a stretcher), and conflate tonal concepts (like ขาว [white], ข่าว [news], and ข้าว [rice]) because tone marks and combining vowels get detached into isolated byte tokens.",
+    "items": [
+      {
+        "label": "ตา-กลม (Round Eyes vs Wind)",
+        "input_text": "ตากลม",
+        "token_ids": [40955, 21437, 26265, 32882, 27379],
+        "token_count": 5,
+        "tokens_str": ["ต", "า", "ก", "ล", "ม"],
+        "meaning_or_context": "Ambiguous segmentation: 'ตา-กลม' (round eyes: ตา=eye, กลม=round) vs 'ตาก-ลม' (bask in wind: ตาก=air out, ลม=wind)"
+      },
+      {
+        "label": "ไป-หา-มเหสี (Visit Queen Consort)",
+        "input_text": "ไปหามเหสี",
+        "token_ids": [50856, 55784, 40272, 21437, 27379, 28991, 40272, 36748, 29419],
+        "token_count": 9,
+        "tokens_str": ["ไ", "ป", "ห", "า", "ม", "เ", "ห", "ส", "ี"],
+        "meaning_or_context": "Tokenizer merges 'า' + 'ม' into 'าม', forming 'หาม' (stretcher/taboo) and destroying the concept of 'มเหสี' (queen consort)"
+      },
+      {
+        "label": "ขาว / ข่าว / ข้าว (Tone Confusion)",
+        "input_text": "ขาว ข่าว ข้าว",
+        "token_ids": [48939, 21437, 38313, 220, 48939, 65841, 38313, 220, 48939, 59095, 38313],
+        "token_count": 11,
+        "tokens_str": ["ข", "า", "ว", " ", "ข", "่า", "ว", " ", "ข", "้า", "ว"],
+        "meaning_or_context": "Tonal shift: 'ขาว' (white) vs 'ข่าว' (news) vs 'ข้าว' (rice) - separated tone marks trigger conceptual hallucination"
       }
     ]
   }
@@ -856,16 +909,23 @@ function updateCalculator() {
 
   // Language multipliers
   const enTokens = Math.round(words * 1.08);
+  const thTokens = Math.round(words * 4.33);
   const hiTokens = Math.round(words * 5.60);
   const amTokens = Math.round(words * 11.09);
   const myTokens = Math.round(words * 30.00);
 
   const enCost = (enTokens / 1_000_000) * pricePerM;
+  const thCost = (thTokens / 1_000_000) * pricePerM;
   const hiCost = (hiTokens / 1_000_000) * pricePerM;
   const amCost = (amTokens / 1_000_000) * pricePerM;
   const myCost = (myTokens / 1_000_000) * pricePerM;
 
   document.getElementById("cost-en-val").textContent = `$${enCost.toFixed(2)} (${enTokens.toLocaleString()} tokens)`;
+  if (document.getElementById("cost-th-val")) {
+    document.getElementById("cost-th-val").textContent = `$${thCost.toFixed(2)} (${thTokens.toLocaleString()} tokens)`;
+    document.getElementById("bar-th").style.width = `${(thTokens / myTokens) * 100}%`;
+    document.getElementById("bar-th").textContent = "4.0x";
+  }
   document.getElementById("cost-hi-val").textContent = `$${hiCost.toFixed(2)} (${hiTokens.toLocaleString()} tokens)`;
   document.getElementById("cost-am-val").textContent = `$${amCost.toFixed(2)} (${amTokens.toLocaleString()} tokens)`;
   document.getElementById("cost-my-val").textContent = `$${myCost.toFixed(2)} (${myTokens.toLocaleString()} tokens)`;

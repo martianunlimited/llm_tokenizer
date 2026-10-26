@@ -78,6 +78,7 @@ class CollisionPreset(BaseModel):
         "math_split",
         "homoglyph",
         "glitch_token",
+        "scriptio_continua",
     ]
     title: str
     subtitle: str

@@ -61,7 +61,11 @@
         <div class="hero-highlights">
           <div class="highlight-badge">
             <span>🌐</span>
-            <span>Burmese pays <strong>14x more</strong> tokens than English</span>
+            <span>Burmese & Thai pay up to <strong>14x Token Tax</strong></span>
+          </div>
+          <div class="highlight-badge">
+            <span>🇹🇭</span>
+            <span>Why <strong>scriptio continua</strong> mangles Thai concepts</span>
           </div>
           <div class="highlight-badge">
             <span>🍓</span>
@@ -116,6 +120,10 @@
               <button class="preset-chip" data-text="9.11 vs 9.9">9.11 vs 9.9</button>
               <button class="preset-chip" data-text="lead is heavy and lead the way">lead vs lead</button>
               <button class="preset-chip" data-text="apple vs аpple">Latin vs Cyrillic</button>
+              <button class="preset-chip" data-text="ตากลม">🇹🇭 ตากลม (Eyes vs Wind)</button>
+              <button class="preset-chip" data-text="ไปหามเหสี">🇹🇭 ไปหามเหสี (Boundary Merge)</button>
+              <button class="preset-chip" data-text="คนขับรถ">🇹🇭 คนขับรถ (Compound Noun)</button>
+              <button class="preset-chip" data-text="เราทุกคนเกิดมาอย่างอิสระและมีความเท่าเทียมกันในเกียรติศักดิ์และสิทธิ">🇹🇭 Thai UDHR (65 tokens)</button>
               <button class="preset-chip" data-text="လူတိုင်းသည် လွတ်လပ်စွာ မွေးဖွားလာကြပြီး">Burmese (180 tokens!)</button>
               <button class="preset-chip" data-text="Ko te katoa o nga tangata i whanau mai">Te Reo Māori</button>
             </div>
@@ -264,7 +272,7 @@
         <!-- Parallel Corpus Filter and Table -->
         <div class="table-filter-bar">
           <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="all">All 15 Languages</button>
+            <button class="filter-btn active" data-filter="all">All 16 Languages</button>
             <button class="filter-btn" data-filter="minority">Indigenous & Minority Scripts</button>
             <button class="filter-btn" data-filter="non-latin">Non-Latin Alphabets</button>
             <button class="filter-btn" data-filter="european">Western European</button>
@@ -332,6 +340,16 @@
                   </div>
                   <div class="bar-track">
                     <div id="bar-en" class="bar-fill bar-en">1.0x</div>
+                  </div>
+                </div>
+
+                <div class="calc-bar-item">
+                  <div class="calc-bar-header">
+                    <span>🇹🇭 Thai (Scriptio Continua)</span>
+                    <strong id="cost-th-val">$6.50 (216,500 tokens)</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div id="bar-th" class="bar-fill bar-th">4.0x</div>
                   </div>
                 </div>
 
@@ -556,6 +574,37 @@
               </div>
               <button class="btn-inspect-sample" onclick="loadTextIntoStudio('listen')">
                 Test in Studio ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 7: The Thai No-Space & Segmentation Trap -->
+          <div class="lab-card">
+            <div class="lab-card-icon">🇹🇭</div>
+            <h3 class="lab-card-title">The Thai "No-Space" Concept Trap</h3>
+            <p class="lab-card-desc">
+              Thai is written without spaces between words (<em>scriptio continua</em>). Because BPE merges based purely on byte frequency 
+              rather than morphological word boundaries, it creates <strong>cross-boundary merges</strong> (e.g. merging <code>"หา"</code> [visit] + <code>"มเหสี"</code> [queen consort] into <code>"หาม"</code> [carry corpse on stretcher/taboo] + <code>"เหสี"</code>) 
+              and forces ambiguous words like <code>"ตากลม"</code> (ตา-กลม "round eyes" vs ตาก-ลม "bask in wind") into unintended concepts.
+            </p>
+            <div class="lab-sandbox-box">
+              <div class="sandbox-row">
+                <span>"ตากลม" (Ambiguous):</span>
+                <span class="sandbox-code">ตากลม</span>
+                <span class="sandbox-token-res">5 separate tokens in cl100k</span>
+              </div>
+              <div class="sandbox-row">
+                <span>"ไปหามเหสี" (Merged):</span>
+                <span class="sandbox-code">ไปหามเหสี</span>
+                <span class="sandbox-token-res">'าม' merges across word border</span>
+              </div>
+              <div class="sandbox-row">
+                <span>Tone shifts (ขาว/ข่าว/ข้าว):</span>
+                <span class="sandbox-code">white vs news vs rice</span>
+                <span class="sandbox-token-res">Floating detached tone marks</span>
+              </div>
+              <button class="btn-inspect-sample" onclick="loadTextIntoStudio('ตากลม')">
+                Test 'ตากลม' in Studio ➔
               </button>
             </div>
           </div>

@@ -943,6 +943,7 @@ input[type="range"].custom-slider {
 }
 
 .bar-en { background: linear-gradient(90deg, #10b981, #059669); }
+.bar-th { background: linear-gradient(90deg, #06b6d4, #0891b2); }
 .bar-hi { background: linear-gradient(90deg, #f59e0b, #d97706); }
 .bar-am { background: linear-gradient(90deg, #ec4899, #db2777); }
 .bar-my { background: linear-gradient(90deg, #ef4444, #b91c1c); }

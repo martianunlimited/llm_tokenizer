@@ -283,5 +283,24 @@
     "cost_multiplier_vs_english_o200k": 8.92,
     "is_minority_or_underrepresented": true,
     "notes": "Indigenous North American language. Almost every syllable splits into 3-4 raw fallback bytes."
+  },
+  {
+    "code": "th",
+    "name": "Thai",
+    "native_name": "ภาษาไทย",
+    "script": "Thai (Scriptio Continua)",
+    "family": "Kra-Dai",
+    "text": "เราทุกคนเกิดมาอย่างอิสระและมีความเท่าเทียมกันในเกียรติศักดิ์และสิทธิ",
+    "word_count": 15,
+    "char_count": 68,
+    "tokens_cl100k": 65,
+    "tokens_o200k": 31,
+    "tokens_r50k": 136,
+    "tpw_cl100k": 4.33,
+    "tpw_o200k": 2.07,
+    "cost_multiplier_vs_english_cl100k": 5.0,
+    "cost_multiplier_vs_english_o200k": 2.38,
+    "is_minority_or_underrepresented": true,
+    "notes": "Written without spaces (scriptio continua) using 3-byte UTF-8 chars. A 15-word sentence explodes into 65 tokens in GPT-4 (5.0x English) and 136 tokens in GPT-3 (10.5x English) due to single-letter fragmentation and byte fallbacks."
   }
 ]

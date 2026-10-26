@@ -372,5 +372,95 @@
         "meaning_or_context": "Cyrillic 'а' (3 tokens: 1506, 604, 273)"
       }
     ]
+  },
+  {
+    "id": "thai-scriptio-continua-ambiguity",
+    "category": "scriptio_continua",
+    "title": "Thai Scriptio Continua: Cross-Boundary Token Merges & Ambiguities",
+    "subtitle": "Lack of word spaces causes BPE to merge across word borders and confuse fundamental concepts",
+    "explanation": "Thai is written without spaces between words (scriptio continua). Because standard LLM tokenizers rely on greedy byte frequencies rather than morphological word boundaries, Thai text suffers from two critical failures: (1) Cross-Boundary Merging: BPE merges the tail of one word with the head of the next word into an unintended subword (e.g. 'หา' [visit] + 'มเหสี' [queen consort] merges into 'หาม' [stretcher/taboo]), scrambling the model's semantic interpretation. (2) Word Segmentation Ambiguity: A string like 'ตากลม' can mean either 'ตา-กลม' (round eyes) or 'ตาก-ลม' (basking in the wind). In cl100k it shatters into 5 individual letters; in o200k, BPE binds 'ต' + 'าก' into 'ตาก' (bask), locking the model into one interpretation and blinding it to 'round eyes'.",
+    "consequence_for_llms": "LLMs frequently misinterpret Thai questions, hallucinate incorrect translations (e.g., mistaking visiting royalty for carrying corpses on a stretcher), and conflate tonal concepts (like ขาว [white], ข่าว [news], and ข้าว [rice]) because tone marks and combining vowels get detached into isolated byte tokens.",
+    "items": [
+      {
+        "label": "ตา-กลม (Round Eyes vs Wind)",
+        "input_text": "ตากลม",
+        "token_ids": [
+          40955,
+          21437,
+          26265,
+          32882,
+          27379
+        ],
+        "token_count": 5,
+        "tokens_str": [
+          "ต",
+          "า",
+          "ก",
+          "ล",
+          "ม"
+        ],
+        "meaning_or_context": "Ambiguous segmentation: 'ตา-กลม' (round eyes: ตา=eye, กลม=round) vs 'ตาก-ลม' (bask in wind: ตาก=air out, ลม=wind)"
+      },
+      {
+        "label": "ไป-หา-มเหสี (Visit Queen Consort)",
+        "input_text": "ไปหามเหสี",
+        "token_ids": [
+          50856,
+          55784,
+          40272,
+          21437,
+          27379,
+          28991,
+          40272,
+          36748,
+          29419
+        ],
+        "token_count": 9,
+        "tokens_str": [
+          "ไ",
+          "ป",
+          "ห",
+          "า",
+          "ม",
+          "เ",
+          "ห",
+          "ส",
+          "ี"
+        ],
+        "meaning_or_context": "Tokenizer merges 'า' + 'ม' into 'าม', forming 'หาม' (stretcher/taboo) and destroying the concept of 'มเหสี' (queen consort)"
+      },
+      {
+        "label": "ขาว / ข่าว / ข้าว (Tone Confusion)",
+        "input_text": "ขาว ข่าว ข้าว",
+        "token_ids": [
+          48939,
+          21437,
+          38313,
+          220,
+          48939,
+          65841,
+          38313,
+          220,
+          48939,
+          59095,
+          38313
+        ],
+        "token_count": 11,
+        "tokens_str": [
+          "ข",
+          "า",
+          "ว",
+          " ",
+          "ข",
+          "่า",
+          "ว",
+          " ",
+          "ข",
+          "้า",
+          "ว"
+        ],
+        "meaning_or_context": "Tonal shift: 'ขาว' (white) vs 'ข่าว' (news) vs 'ข้าว' (rice) - separated tone marks trigger conceptual hallucination"
+      }
+    ]
   }
 ]

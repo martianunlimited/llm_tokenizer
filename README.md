@@ -65,6 +65,7 @@ When a sentence from the *Universal Declaration of Human Rights (Article 1)* is 
 | **Māori (Te Reo)** | Latin | 18 | 31 | 1.72 t/w | 2.38x |
 | **Russian** | Cyrillic | 10 | 28 | 2.80 t/w | 2.15x |
 | **Arabic** | Arabic | 8 | 37 | 4.62 t/w | 2.85x |
+| **Thai** | Thai (Scriptio Continua) | 15 | **65** | **4.33 t/w** | **5.00x** |
 | **Hindi** | Devanagari | 15 | 84 | 5.60 t/w | **6.46x** |
 | **Amharic** | Ge'ez | 11 | 122 | 11.09 t/w | **9.38x** |
 | **Burmese** | Myanmar | 6 | **180** | **30.00 t/w** | **13.85x** |
@@ -127,6 +128,12 @@ Because tokenizers are language-agnostic, words with identical spelling in diffe
 
 5. **Glitch Tokens (`SolidGoldMagikarp`)**:
    - In GPT-3 (`r50k_base`), `" SolidGoldMagikarp"` is single Token ID `#43453`. It was scraped from Reddit during tokenizer construction, but never appeared in text pretraining. Querying it causes the model to loop, hallucinate, or crash.
+
+6. **The Thai "No-Space" & Segmentation Trap (Scriptio Continua)**:
+   - Written Thai does not use spaces between words. BPE tokenizers greedily merge character sequences based purely on byte frequency rather than word boundaries.
+   - **Cross-Boundary Merging**: In `ไปหามเหสี` (go visit queen consort: `ไป` + `หา` + `มเหสี`), GPT-4o merges `า` + `ม` across the word boundary into `าม`, forming `หาม` (to carry a stretcher / taboo) and dismantling the royal title `มเหสี`.
+   - **Word Segmentation Ambiguity**: `ตากลม` can mean either `ตา-กลม` (round eyes: `ตา`=eye, `กลม`=round) or `ตาก-ลม` (basking in wind: `ตาก`=air out, `ลม`=wind). In `cl100k`, it shatters into 5 isolated letters; in `o200k`, BPE merges `ต` + `าก` into `ตาก`, forcing the breeze interpretation and destroying the eye concept.
+   - **Tone Mark Detachment**: Vowels and tone marks get split into separate byte tokens, causing models to conflate tonal words like `ขาว` (white), `ข่าว` (news), and `ข้าว` (rice).
 
 ---
 
